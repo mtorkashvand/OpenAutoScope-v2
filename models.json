@@ -1,0 +1,4 @@
+{
+    "xy4x": "uses threshold filtering with otsu algorithm and size of connected components",
+    "xy10x": "uses the network trained on 17000 frames"
+}

@@ -1,5 +1,3 @@
-#! python
-#
 # Copyright 2021
 # Author: Vivek Venkatachalam, Mahdi Torkashvand
 #
@@ -36,20 +34,20 @@
 This XInput processor converts raw controller output to discrete events.
 
 Usage:
-    processor.py           [options]
+    controller_processor.py  [options]
 
 Options:
-    -h --help               Show this help.
-    --name=NAME             Name of the XBox controller subscriber.
-                                [default: controller]
-    --inbound=HOST:PORT     Connection for inbound messages.
-                                [default: *:5558]
-    --outbound=HOST:PORT    Binding for outbound messages.
-                                [default: *:6001]
-    --deadzone=DEADZONE     Thumbstick deadzone.
-                                [default: 5000]
-    --threshold=THRESHOLD   Trigger activation threshold.
-                                [default: 50]
+    -h --help                Show this help.
+    --name=NAME              Name of the XBox controller subscriber.
+                                 [default: controller_processor]
+    --inbound=HOST:PORT      Connection for inbound messages.
+                                 [default: *:5558]
+    --outbound=HOST:PORT     Binding for outbound messages.
+                                 [default: *:6001]
+    --deadzone=DEADZONE      Thumbstick deadzone.
+                                 [default: 5000]
+    --threshold=THRESHOLD    Trigger activation threshold.
+                                 [default: 50]
 """
 
 import struct
@@ -136,24 +134,15 @@ class XInputProcessor():
         self.packet_number = 0
     
     def shutdown(self):
-        """This terminates the processor."""
         self.update_and_send_state(0,0,0,0,0,0,0)
         self.running = False
-        return
 
     def run(self):
-        """This runs the processor."""
-
         def _finish(*_):
             raise SystemExit
         signal.signal(signal.SIGINT, _finish)
 
         while self.running:
-            # Receive Command
-            msg = self.subscriber.recv_last()
-            if msg is not None:
-                self.subscriber.process(msg)
-            # Get XInput States
             state = XInput.get_state(0)
             if state.dwPacketNumber != self.packet_number:
                 self.packet_number = state.dwPacketNumber
@@ -163,9 +152,14 @@ class XInputProcessor():
                     state.Gamepad.sThumbLX, state.Gamepad.sThumbLY,
                     state.Gamepad.sThumbRX, state.Gamepad.sThumbRY
                 )
-            time.sleep(0.01)
-                
-    
+
+            msg = self.subscriber.recv_last()
+            if msg is not None:
+                self.subscriber.process(msg)
+
+            time.sleep(0.001)
+
+
     # Update State
     def update_and_send_state(self,
             wButtons,
@@ -291,8 +285,6 @@ class XInputProcessor():
         return messages
 
 def main():
-    """CLI entry point."""
-
     arguments = docopt(__doc__)
 
     name = arguments["--name"]
